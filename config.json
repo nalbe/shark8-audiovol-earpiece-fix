@@ -1,0 +1,7 @@
+{
+  "user": "nalbe",
+  "email": "nalbe@ya.ru",
+  "api": "https://api.github.com",
+  "uploads": "https://uploads.github.com",
+  "credManagerProtocols": ["github.com"]
+}
