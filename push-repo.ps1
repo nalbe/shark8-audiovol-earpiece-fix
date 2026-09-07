@@ -39,8 +39,8 @@ if ($resp -notmatch [regex]::Escape($pat)) { Write-Host "Repo creation failed:" 
 Write-Host ("repo created: https://github.com/nalbe/{0}" -f $Name) -ForegroundColor Green
 
 # 3. push
-$remote = git -C $Dir remote get-url origin 2>$null
-if (-not $remote) { git -C $Dir remote add origin "https://github.com/nalbe/$Name.git" }
+$hasRemote = (& git -C $Dir remote 2>$null) -contains "origin"
+if (-not $hasRemote) { git -C $Dir remote add origin "https://github.com/nalbe/$Name.git" }
 else { git -C $Dir remote set-url origin "https://github.com/nalbe/$Name.git" }
 git -C $Dir push -u origin main 2>&1 | Out-Null
 Write-Host ("pushed: {0}" -f $Name) -ForegroundColor Green
