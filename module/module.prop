@@ -1,0 +1,6 @@
+id=shark8_audiovol_fix
+name=Shark8 Earpiece Volume Fix (WB/RCV GSM dl_gain)
+version=v1.0
+versionCode=1
+author=Bastet
+description=Patches SpeechVol_AudioParam.xml param_id=11 (WB,RCV,GSM / WB,HAC,GSM) dl_gain 4th step 4->12 dB. Fixes weak earpiece volume on mid volume levels during VoLTE(WB) calls. Read-only KNEE, no writes elsewhere.
