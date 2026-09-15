@@ -1,8 +1,0 @@
-KernelSU module: persistent ADB over Wi-Fi on tcp 5555, firewalled to the LAN subnet only (iptables, auto-detect /24 from wlan0 or configurable via config file).
-
-Verified on Shark 8 / Android 13 GSI / KernelSU 0.9.4. Includes build.ps1 to rebuild the zip.
-
-Fixes from earlier module versions:
-- no persist.adb.tcp.port (bootloop cause)
-- no service.adb.adb_root (bootloop cause)
-- bounded boot wait
