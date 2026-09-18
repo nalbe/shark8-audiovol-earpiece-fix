@@ -55,6 +55,8 @@ even though the module tree itself is valid and SELinux context comes out right.
 A separate system/vendor-layout module hangs the same. The RAW module overlay
 (which already mounts `lowerdir=/data/adb/modules/RAW/vendor:/vendor`) loads
 fine, so the working approach is to drop the file into `RAW/vendor/etc/audio_param/`.
+The `module_bind/` variant (below) bypasses the problem entirely by avoiding
+any KSU-made overlay: it bind-mounts a single file in `post-fs-data`.
 
 ## Apply
 
@@ -69,6 +71,47 @@ adb reboot
 ```
 
 Helpers: `scripts/apply.sh [serial]`, `scripts/revert.sh [serial]`.
+
+## Bind-mount module (v1.1, tested, no RAW dependency)
+
+`module_bind/` is a standalone KernelSU module that needs neither RAW nor any
+vendor overlay. It ships the patched XML plus `post-fs-data.sh`, which at boot
+does a plain `mount --bind` of the module file over
+`/vendor/etc/audio_param/SpeechVol_AudioParam.xml`.
+
+Why this works here when the standalone KSU overlay does not:
+
+- The module has NO `vendor/` (or `system/`) tree, so KernelSU sets up **no
+  overlay mount** for it -> the boot hang seen with the standalone overlay
+  module never triggers.
+- `/vendor` is `ro` (ext4 `ro` + KSU overlay `lowerdir=.../RAW/vendor:/vendor`),
+  so a plain copy is impossible; a file `mount --bind` does not write to the
+  lower fs at all and is allowed even over a read-only overlay.
+- The bind source gets `chcon u:object_r:vendor_file:s0`, so the audio HAL
+  reads it with the exact original security context.
+- The bind is created in `post-fs-data`, i.e. before the audio policy/HAL
+  reads the tuning file.
+
+Build: `scripts/build_release.ps1 -Root . -OutZip release/shark8-audiovol-earpiece-fix-bind-v1.1.zip -ModuleDir module_bind`
+
+Install (KernelSU; the zip is staged into `modules_update.img` and applied on
+next boot, no manager app needed):
+
+```sh
+adb push release/shark8-audiovol-earpiece-fix-bind-v1.1.zip /data/local/tmp/
+adb root
+adb shell "/data/adb/ksu/bin/ksud module install /data/local/tmp/shark8-audiovol-earpiece-fix-bind-v1.1.zip"
+adb reboot
+```
+
+Revert: `adb shell "/data/adb/ksu/bin/ksud module uninstall shark8_audiovol_bind"`, reboot.
+
+Verify after reboot:
+
+```sh
+adb shell "md5sum /vendor/etc/audio_param/SpeechVol_AudioParam.xml"   # == 15fa72baae98229beef4f1c3fc128880
+adb shell "mount | grep SpeechVol"      # /dev/block/loopN on /vendor/etc/audio_param/... type ext4 (rw,...)
+```
 
 ## Verify
 
